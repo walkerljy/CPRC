@@ -10,18 +10,23 @@ desW 截图的宽度
 desH 截图的高度
 */
 
-HDC screenDC,memDC;
-HBITMAP hBitmap,hBitmapOld;
+HDC screenDC, memDC;
+HBITMAP hBitmap, hBitmapOld;
 int desx, desy, desW, desH;
+BITMAPINFOHEADER bi;
+DWORD dwBmpSize;
+HANDLE hDib;
+char *lpbitmap;
 
-int CaptureScreenInit(){
-    desx=0;
-    desy=0;
-    desW=1920;
-    desH=1080;
-    //获取屏幕的句柄
+int CaptureScreenInit()
+{
+    desx = 0;
+    desy = 0;
+    desW = 1920;
+    desH = 1080;
+    // 获取屏幕的句柄
     screenDC = GetDC(NULL);
-    //需要注意的是对于多现实器，是从主显示器左上角为（0,0）延伸的，可以根据具体业务设置
+    // 需要注意的是对于多现实器，是从主显示器左上角为（0,0）延伸的，可以根据具体业务设置
     /*
     假如需要对屏幕进行比较多的gdi函数操作，如果每一步操作都直接对屏幕dc进行操作，
     那出现的大多数可能性都是屏幕的闪烁。
@@ -37,13 +42,13 @@ int CaptureScreenInit(){
     返回值：如果函数执行成功，那么返回值是位图的句柄；
     如果函数执行失败，那么返回值为NULL。若想获取更多错误信息，请调用GetLastError。
     */
-   return 0;
+    return 0;
 }
 
 int CaptureScreen()
 {
     hBitmap = CreateCompatibleBitmap(screenDC, desW, desH);
-    //该函数选择一对象到指定的设备上下文环境中，该新对象替换先前的相同类型的对象。
+    // 该函数选择一对象到指定的设备上下文环境中，该新对象替换先前的相同类型的对象。
     hBitmapOld = (HBITMAP)SelectObject(memDC, hBitmap);
     /*
     BOOL BitBlt(
@@ -57,15 +62,11 @@ int CaptureScreen()
         int   nYSrc,     // 源矩形的左上角 y 坐标
         DWORD dwRop      // 光栅操作码，指定如何进行位图数据的传输
     );*/
-    //将指定区域的图像内存复制到位图，SRCCOPY代表复制操作枚举
+    // 将指定区域的图像内存复制到位图，SRCCOPY代表复制操作枚举
     BitBlt(memDC, 0, 0, desW, desH, screenDC, 0, 0, SRCCOPY);
-    return 0;
-}
-
-int SaveCapturedScreen(string outName){
-    int screenW = desW;// GetDeviceCaps(screenDC, HORZRES);
-    int screenH = desH;// GetDeviceCaps(screenDC, VERTRES);
-        //typedef struct tagBITMAPINFOHEADER {
+    int screenW = desW; // GetDeviceCaps(screenDC, HORZRES);
+    int screenH = desH; // GetDeviceCaps(screenDC, VERTRES);
+                        // typedef struct tagBITMAPINFOHEADER {
     //    DWORD biSize;          // 结构的大小，通常为 40 字节
     //    LONG  biWidth;         // 位图的宽度（以像素为单位）
     //    LONG  biHeight;        // 位图的高度（以像素为单位）
@@ -78,8 +79,7 @@ int SaveCapturedScreen(string outName){
     //    DWORD biClrUsed;       // 位图使用的颜色索引数，0 表示使用所有可用颜色索引
     //    DWORD biClrImportant;  // 对图像显示有重要影响的颜色索引数，0 表示所有颜色都重要
     //} BITMAPINFOHEADER, * PBITMAPINFOHEADER;
-    //保存文件
-    BITMAPINFOHEADER bi;
+    // 保存文件
     bi.biSize = sizeof(BITMAPINFOHEADER);
     bi.biWidth = desW;
     bi.biHeight = desH;
@@ -87,8 +87,8 @@ int SaveCapturedScreen(string outName){
     位图的高度，以像素为单位。如果值为正，表示图像是从顶部到底部排列的；
     如果值为负，表示图像是从底部到顶部排列的。通常，正值是常见的。
     */
-    bi.biPlanes = 1;//目标设备的平面数，通常为1。在绝大多数情况下，这个值是1。
-    bi.biBitCount = 24;//24位彩色与32位区别在于不需要透明通道
+    bi.biPlanes = 1;    // 目标设备的平面数，通常为1。在绝大多数情况下，这个值是1。
+    bi.biBitCount = 24; // 24位彩色与32位区别在于不需要透明通道
     bi.biCompression = BI_RGB;
     /*
     常见的压缩方式包括BI_RGB（无压缩）和BI_RLE8（8位运行长度编码）。
@@ -100,13 +100,18 @@ int SaveCapturedScreen(string outName){
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
 
-    DWORD dwBmpSize = ((screenW * bi.biBitCount + 31) / 32) * 4 * desH;
-    HANDLE hDib = GlobalAlloc(GHND, dwBmpSize);
-    char* lpbitmap = (char*)GlobalLock(hDib);
-    GetDIBits(screenDC, hBitmap, 0, desH, lpbitmap, (BITMAPINFO*)&bi, DIB_RGB_COLORS);//screenDC
+    dwBmpSize = ((screenW * bi.biBitCount + 31) / 32) * 4 * desH;
+    hDib = GlobalAlloc(GHND, dwBmpSize);
+    lpbitmap = (char *)GlobalLock(hDib);
+    GetDIBits(screenDC, hBitmap, 0, desH, lpbitmap, (BITMAPINFO *)&bi, DIB_RGB_COLORS); // screenDC
+    return 0;
+}
 
-    FILE* file = fopen(outName.c_str(), "wb");
-    if (file) {
+int SaveCapturedScreen(string outName)
+{
+    FILE *file = fopen(outName.c_str(), "wb");
+    if (file)
+    {
         BITMAPFILEHEADER bf;
         /*
         它对应ASCII字符"M"和"B"，表示"BM"，
@@ -122,17 +127,26 @@ int SaveCapturedScreen(string outName){
 
         fclose(file);
     }
-    GlobalUnlock(hDib);
-    GlobalFree(hDib);
     return 0;
 }
 
-int FinishCapture(){
-    //清理资源
+int FinishCapture()
+{
+    // 清理资源
+    GlobalUnlock(hDib);
+    GlobalFree(hDib);
     SelectObject(memDC, hBitmapOld);
     DeleteDC(memDC);
     ReleaseDC(NULL, screenDC);
     DeleteObject(hBitmap);
+    return 0;
+}
+
+int PrintCharedPicture()
+{
+    //char *buffer = (char *)&lpbitmap;
+    //printf("%s\n", lpbitmap);
+    printf("%d\n", strlen(lpbitmap));
     return 0;
 }
 
@@ -141,10 +155,14 @@ int main()
     CaptureScreenInit();
     CaptureScreen();
     SaveCapturedScreen("测试位图.bmp");
+    PrintCharedPicture();
     Sleep(1000);
     SaveCapturedScreen("测试位图2.bmp");
+    PrintCharedPicture();
+    Sleep(1000);
     CaptureScreen();
     SaveCapturedScreen("测试位图3.bmp");
+    PrintCharedPicture();
     FinishCapture();
     return 0;
 }
