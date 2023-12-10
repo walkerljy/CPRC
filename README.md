@@ -1,2 +1,3 @@
 # CPRC
-Cross-Platform Remote Control
+###### CPRC -- Cross-Platform Remote Control
+This is a public project for private use.
