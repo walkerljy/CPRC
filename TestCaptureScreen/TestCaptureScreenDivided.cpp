@@ -130,7 +130,7 @@ int SaveCapturedScreen(string outName)
     return 0;
 }
 
-int FinishCapture()
+int TempReleaseCapture()
 {
     // 清理资源
     GlobalUnlock(hDib);
@@ -163,6 +163,6 @@ int main()
     CaptureScreen();
     SaveCapturedScreen("测试位图3.bmp");
     PrintCharedPicture();
-    FinishCapture();
+    TempReleaseCapture();
     return 0;
 }
