@@ -11,6 +11,8 @@
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-lgdi32",
+                " -lws2_32",
+                "-lwsock32",
                 "-fexec-charset=GBK",
                 "-finput-charset=UTF-8"
             ],
