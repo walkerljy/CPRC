@@ -1,6 +1,5 @@
 #include <Windows.h>
 #include <string>
-#include <unistd.h>
 using namespace std;
 
 /*
@@ -104,7 +103,7 @@ int SaveCapturedScreen(string outName){
     DWORD dwBmpSize = ((screenW * bi.biBitCount + 31) / 32) * 4 * desH;
     HANDLE hDib = GlobalAlloc(GHND, dwBmpSize);
     char* lpbitmap = (char*)GlobalLock(hDib);
-    GetDIBits(screenDC, hBitmap, 0, desH, lpbitmap, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+    GetDIBits(screenDC, hBitmap, 0, desH, lpbitmap, (BITMAPINFO*)&bi, DIB_RGB_COLORS);//screenDC
 
     FILE* file = fopen(outName.c_str(), "wb");
     if (file) {
@@ -142,9 +141,10 @@ int main()
     CaptureScreenInit();
     CaptureScreen();
     SaveCapturedScreen("测试位图.bmp");
-    usleep(1000);
-    CaptureScreen();
+    Sleep(1000);
     SaveCapturedScreen("测试位图2.bmp");
+    CaptureScreen();
+    SaveCapturedScreen("测试位图3.bmp");
     FinishCapture();
     return 0;
 }
