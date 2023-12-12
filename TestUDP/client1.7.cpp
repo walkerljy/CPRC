@@ -22,6 +22,12 @@ int port = 1000;
 // 接收和发送
 char recvBuf[1024] = {0};
 char sendBuf[1024] = "Nice to meet you!";
+char *curPic = new char[60000];
+
+// int ProcessBuff(){
+//     if(recvBuf[1024]!={0})
+// }
+
 
 int UDPCLientInit()
 {
@@ -68,7 +74,7 @@ void UDPClientLoop(){
         if (recvLen > 0)
         {
             //std::printf("接收到一个连接, 其ip: %s, port: %d\n", inet_ntoa(m_RemoteAddress.sin_addr), ntohs(m_RemoteAddress.sin_port));
-            cout << "接收到一个信息： " << recvBuf << endl;
+            // cout << "接收到一个信息： " << ((int)recvBuf[0])-32 << endl;
         }
         recvBuf[1024] = {0};
     }

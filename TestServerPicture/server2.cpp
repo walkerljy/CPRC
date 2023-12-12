@@ -41,6 +41,7 @@ int desx, desy, desW, desH;
 BITMAPINFOHEADER bi;
 DWORD dwBmpSize;
 char *lpbitmap;
+char *curPic = new char[60000];
 
 bool UDPServerInit()
 {
@@ -81,6 +82,7 @@ void UDPTimeout()
         int recvLen = recvfrom(m_Socket, recvBuf, 1024, 0, (sockaddr *)&m_RemoteAddress, &m_RemoteAddressLen);
         if (recvLen > 0)
         {
+            printf("接收到一个连接, 其ip: %s, port: %d\n", inet_ntoa(m_RemoteAddress.sin_addr), ntohs(m_RemoteAddress.sin_port));
             time(&timep);
         }
     }
@@ -102,15 +104,16 @@ void UDPSendLoop()
         time(&timep);
         int ltime = timep;
         timeOutStatus = false;
-        thread TimeOut(UDPTimeout);
-        TimeOut.detach();
+        thread (UDPTimeout).detach();
+        printf("Time set.\n");
         while (timep - ltime <= 60)
         {
-            char *curPic = new char[60000];
-            memcpy(curPic, lpbitmap, 58571);
+            // printf("char pointer created.\n");
+            // printf("lpbitmap size:%s\n",lpbitmap);
+            printf("Start Sending.\n");
             for (int i = 0; i < 60; i++)
             {
-                sendBuf[0] = (char)i;
+                sendBuf[0] = (char)(i+32);
                 for (int j = 0; j < 1000; j++)
                 {
                     sendBuf[1 + j] = curPic[i * 1000 + j];
@@ -123,7 +126,10 @@ void UDPSendLoop()
                 }
                 */
             }
+            Sleep(500);
             time(&timep);
+            // delete []curPic;
+            // printf("timep:%d  ltime:%d\n",timep,ltime);
         }
         cout << "Err: timeout." << endl;
         timeOutStatus = true;
@@ -157,12 +163,12 @@ int CaptureScreenInit()
     return 0;
 }
 
-int TempReleaseCapture()
-{
-    // 清理资源
-    SelectObject(memDC, hBitmapOld);
-    return 0;
-}
+// int TempReleaseCapture()
+// {
+//     // 清理资源
+//     SelectObject(memDC, hBitmapOld);
+//     return 0;
+// }
 
 int CaptureScreen()
 {
@@ -230,7 +236,8 @@ int CaptureScreen()
     hDib = GlobalAlloc(GHND, dwBmpSize);
     lpbitmap = (char *)GlobalLock(hDib);
     GetDIBits(screenDC, hBitmap, 0, desH, lpbitmap, (BITMAPINFO *)&bi, DIB_RGB_COLORS); // screenDC
-    TempReleaseCapture();
+    memcpy(curPic, lpbitmap, 58571);
+    // TempReleaseCapture();
     GlobalUnlock(hDib);
     GlobalFree(hDib);
     return 0;
@@ -256,11 +263,12 @@ int PrintCharedPicture()
 
 void CaptureScreenLoop(int interval)
 {
-    CaptureScreenInit();
     while (true)
     {
+        CaptureScreenInit();
         Sleep(interval);
         CaptureScreen();
+        FinishCapture();
     }
     return;
 }
@@ -268,9 +276,9 @@ void CaptureScreenLoop(int interval)
 int main()
 {
     UDPServerInit();
-    thread UDPServer(UDPSendLoop);
     thread Capture(CaptureScreenLoop, 10);
     Capture.detach();
+    thread UDPServer(UDPSendLoop);
     UDPServer.detach();
     while (true)
     {
