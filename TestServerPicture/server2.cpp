@@ -105,12 +105,12 @@ void UDPSendLoop()
         int ltime = timep;
         timeOutStatus = false;
         thread (UDPTimeout).detach();
-        printf("Time set.\n");
+        // printf("Time set.\n");
         while (timep - ltime <= 60)
         {
             // printf("char pointer created.\n");
             // printf("lpbitmap size:%s\n",lpbitmap);
-            printf("Start Sending.\n");
+            // printf("Start Sending.\n");
             for (int i = 0; i < 60; i++)
             {
                 sendBuf[0] = (char)(i+32);
