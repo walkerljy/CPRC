@@ -42,6 +42,7 @@ BITMAPINFOHEADER bi;
 DWORD dwBmpSize;
 char *lpbitmap;
 char *curPic = new char[60000];
+int targetFPS,FPScnt,frameInterval,lastFPS;
 
 bool UDPServerInit()
 {
@@ -143,6 +144,20 @@ void UDPCleanUp()
 }
 
 //------------------------------------up:UDP down:Pic---------------------------------------------
+
+int FPSControl(){
+    frameInterval=10;
+    FPScnt=0;
+    targetFPS=120;
+    while(true){
+        lastFPS=FPScnt;
+        frameInterval+=(FPScnt-targetFPS);
+        if(frameInterval>40) frameInterval=40;
+        if(frameInterval<0) frameInterval=0;
+        FPScnt=0;
+        Sleep(1000);
+    }
+}
 
 int CaptureScreenInit()
 {
@@ -261,25 +276,41 @@ int PrintCharedPicture()
     return 0;
 }
 
-void CaptureScreenLoop(int interval)
+void CaptureScreenLoop()
 {
     while (true)
     {
         CaptureScreenInit();
-        Sleep(interval);
+        Sleep(frameInterval);
         CaptureScreen();
         FinishCapture();
+        FPScnt++;
     }
     return;
+}
+
+void commandL(){
+    while(true){
+        string ipt;
+        cin>>ipt;
+        if(ipt=="fps"){
+            cout<<"FPS:"<<lastFPS<<endl;
+        }
+        else{
+            cout<<"Unknown command."<<endl;
+        }
+    }
 }
 
 int main()
 {
     UDPServerInit();
-    thread Capture(CaptureScreenLoop, 10);
+    thread (FPSControl).detach();
+    thread Capture(CaptureScreenLoop);
     Capture.detach();
     thread UDPServer(UDPSendLoop);
     UDPServer.detach();
+    thread (commandL).detach();
     while (true)
     {
         true;
